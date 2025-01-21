@@ -28,9 +28,9 @@
             const string CommandFight = "1";
             const string CommandExit = "2";
 
-            bool menuIsActive = true;
+            bool IsActive = true;
 
-            while (menuIsActive)
+            while (IsActive)
             {
                 Console.Clear();
                 ShowWelcomeMessage();
@@ -45,7 +45,7 @@
                         break;
 
                     case CommandExit:
-                        menuIsActive = false;
+                        IsActive = false;
                         break;
                 }
             }
