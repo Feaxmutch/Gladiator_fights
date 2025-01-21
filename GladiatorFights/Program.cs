@@ -53,7 +53,6 @@
 
         private void StartFight(Fighter fighter1, Fighter fighter2)
         {
-            ConsoleColor defaultColor = Console.ForegroundColor;
             bool isFighting = true;
             Fighter winer = null;
 
