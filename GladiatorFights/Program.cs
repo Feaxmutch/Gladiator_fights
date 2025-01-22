@@ -157,7 +157,6 @@
         }
 
         public event Action<int> TakedDamage;
-        public event Action Attacked;
 
         public int Health { get; private set; }
 
