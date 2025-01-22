@@ -118,7 +118,7 @@
                               $"{CommandSpearman}) Копейщик\n" +
                               $"{CommandViking}) Викинг\n" +
                               $"{CommandMagican}) Маг\n" +
-                              $"{CommandThief}) Щитовик");
+                              $"{CommandThief}) Вор");
 
                 switch (Console.ReadLine())
                 {
@@ -337,7 +337,7 @@
 
             if (isDoge)
             {
-                Console.Write($"{Name} уклонился");
+                Console.WriteLine($"{Name} уклонился");
             }
             else
             {
