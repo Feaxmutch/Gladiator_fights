@@ -34,7 +34,7 @@
             {
                 Console.Clear();
                 ShowWelcomeMessage();
-                Console.WriteLine($"{CommandFight}) Посмотреть бой");
+                Console.WriteLine($"\n{CommandFight}) Посмотреть бой");
                 Console.WriteLine($"{CommandExit}) Выйти из колизея");
                 string userCommand = Console.ReadLine();
 
@@ -62,9 +62,12 @@
             while (isFighting)
             {
                 Console.Clear();
-                Console.WriteLine("Здоровье:");
-                Console.WriteLine($"{fighter1.Name} {fighter1.Health}");
-                Console.WriteLine($"{fighter2.Name} {fighter2.Health}\n");
+                Console.WriteLine("Статус бойцов:");
+                Console.WriteLine($"\n{fighter1.Name}");
+                fighter1.ShowStatus();
+                Console.WriteLine($"\n{fighter2.Name}");
+                fighter2.ShowStatus();
+                Console.WriteLine();
 
                 fighter1.Attack(fighter2);
 
@@ -126,10 +129,10 @@
                         return new Spearman();
 
                     case CommandViking:
-                        return new Viking(0.7f, 50);
+                        return new Viking(1.1f, 50);
 
                     case CommandMagican:
-                        return new Magican();
+                        return new Magican(100, 15, 11f);
 
                     case CommandThief:
                         return new Thief(0.45f);
@@ -163,6 +166,11 @@
         public bool IsDead => Health <= 0;
 
         public int Damage { get; }
+
+        public virtual void ShowStatus()
+        {
+            Console.WriteLine($"Здоровье: {Health}");
+        }
 
         public abstract void Attack(IDamageble target);
 
@@ -252,7 +260,7 @@
         public override void Attack(IDamageble target)
         {
             int damage = Damage;
-            Console.Write($"{Name} атаковал противника ");
+            Console.WriteLine($"{Name} атаковал противника ");
             target.TakeDamage(damage);
         }
 
@@ -271,13 +279,24 @@
     public class Magican : Fighter
     {
         private readonly int _magicAttackCoast;
-        private readonly float _magicAttackMultiplyer;
+        private readonly float _magicAttackMultiplyer ;
         private int _mana;
 
-        public Magican() : base(1000, 10, "Маг")
+        public Magican(int mana, int magicAttackCoast, float magicAttackMultiplyer) : base(1000, 10, "Маг")
         {
-            _mana = 100;
-            _magicAttackCoast = 15;
+            ArgumentOutOfRangeException.ThrowIfNegative(magicAttackMultiplyer);
+            ArgumentOutOfRangeException.ThrowIfNegative(magicAttackCoast);
+            ArgumentOutOfRangeException.ThrowIfNegative(mana);
+
+            _mana = mana;
+            _magicAttackCoast = magicAttackCoast;
+            _magicAttackMultiplyer = magicAttackMultiplyer;
+        }
+
+        public override void ShowStatus()
+        {
+            base.ShowStatus();
+            Console.WriteLine($"Мана: {_mana}");
         }
 
         public override void Attack(IDamageble target)
@@ -292,6 +311,7 @@
                 Console.Write($"магией");
             }
 
+            Console.WriteLine();
             target.TakeDamage(damage);
         }
     }
@@ -308,7 +328,7 @@
         public override void Attack(IDamageble target)
         {
             int damage = Damage;
-            Console.Write($"{Name} атаковал противника");
+            Console.WriteLine($"{Name} атаковал противника");
             target.TakeDamage(damage);
         }
 
