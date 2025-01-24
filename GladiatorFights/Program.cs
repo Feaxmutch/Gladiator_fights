@@ -4,7 +4,16 @@
     {
         static void Main()
         {
-            Colosseum colosseum = new();
+            List<Fighter> fighters = new()
+            {
+                new Knight(0.5f),
+                new Spearman(),
+                new Viking(1.1f, 50),
+                new Magican(100, 15, 11f),
+                new Thief(0.45f),
+            };
+
+            Colosseum colosseum = new(fighters);
             colosseum.ShowMenu();
         }
     }
@@ -19,18 +28,47 @@
             ArgumentOutOfRangeException.ThrowIfGreaterThan(trueChance, 1);
             return s_random.NextDouble() < trueChance;
         }
+
+        public static bool TryRequestNumber(string mesage, out int number)
+        {
+            Console.WriteLine(mesage);
+            string userInput = Console.ReadLine();
+
+            if (userInput == string.Empty)
+            {
+                Console.WriteLine("Вы ничего не ввели");
+            }
+
+            bool isParsed = int.TryParse(userInput, out number);
+
+            if (isParsed == false)
+            {
+                Console.WriteLine($"Не получилось конвертировать {userInput} в число.");
+                Console.WriteLine($"Возможно есть лишние символы");
+                Console.ReadKey();
+            }
+
+            return isParsed;
+        }
     }
 
     public class Colosseum
     {
+        private readonly IReadOnlyList<Fighter> _fighters;
+
+        public Colosseum(List<Fighter> fighters)
+        {
+            _fighters = fighters;
+        }
+
         public void ShowMenu()
         {
             const string CommandFight = "1";
             const string CommandExit = "2";
 
-            bool IsActive = true;
+            bool isActive = true;
 
-            while (IsActive)
+            while (isActive)
             {
                 Console.Clear();
                 ShowWelcomeMessage();
@@ -41,17 +79,17 @@
                 switch (userCommand)
                 {
                     case CommandFight:
-                        StartFight(SelectFighter(), SelectFighter());
+                        ExecuteFight(SelectFighter(), SelectFighter());
                         break;
 
                     case CommandExit:
-                        IsActive = false;
+                        isActive = false;
                         break;
                 }
             }
         }
 
-        private void StartFight(Fighter fighter1, Fighter fighter2)
+        private void ExecuteFight(Fighter fighter1, Fighter fighter2)
         {
             bool isFighting = true;
             Fighter winer = null;
@@ -62,20 +100,21 @@
             while (isFighting)
             {
                 Console.Clear();
+
                 Console.WriteLine("Статус бойцов:");
                 Console.WriteLine($"\n{fighter1.Name}");
                 fighter1.ShowStatus();
                 Console.WriteLine($"\n{fighter2.Name}");
                 fighter2.ShowStatus();
-                Console.WriteLine();
 
+                Console.WriteLine();
                 fighter1.Attack(fighter2);
 
                 if (fighter2.IsDead)
                 {
                     isFighting = false;
                     winer = fighter1;
-                    break;
+                    continue;
                 }
 
                 Console.ReadKey();
@@ -85,13 +124,13 @@
                 {
                     isFighting = false;
                     winer = fighter2;
-                    break;
+                    continue;
                 }
 
                 Console.ReadKey();
             }
 
-            Console.WriteLine($"{winer.Name} победил");
+            ShowWinMessage(winer);
             Console.ReadKey();
         }
 
@@ -100,42 +139,32 @@
             Console.WriteLine("Добро пожаловать в колизей");
         }
 
+        private void ShowWinMessage(Fighter winer)
+        {
+            Console.WriteLine($"{winer.Name} победил");
+        }
+
         private Fighter SelectFighter()
         {
-            const string CommandKnight = "1";
-            const string CommandSpearman = "2";
-            const string CommandViking = "3";
-            const string CommandMagican = "4";
-            const string CommandThief = "5";
-
             bool isSelecting = true;
+            int fighterIndex = default;
 
             while (isSelecting)
             {
                 Console.Clear();
-                Console.WriteLine($"Выберите бойца:\n" +
-                              $"{CommandKnight}) Рыцарь\n" +
-                              $"{CommandSpearman}) Копейщик\n" +
-                              $"{CommandViking}) Викинг\n" +
-                              $"{CommandMagican}) Маг\n" +
-                              $"{CommandThief}) Вор");
+                Console.WriteLine($"Выберите бойца:");
 
-                switch (Console.ReadLine())
+                for (int i = 0; i < _fighters.Count; i++)
                 {
-                    case CommandKnight:
-                        return new Knight(0.5f);
+                    Console.WriteLine($"{i}) {_fighters[i].Name}");
+                }
 
-                    case CommandSpearman:
-                        return new Spearman();
+                while (Utilits.TryRequestNumber("Введите номер", out fighterIndex) == false) { }
 
-                    case CommandViking:
-                        return new Viking(1.1f, 50);
-
-                    case CommandMagican:
-                        return new Magican(100, 15, 11f);
-
-                    case CommandThief:
-                        return new Thief(0.45f);
+                if (fighterIndex >= 0 && fighterIndex < _fighters.Count)
+                {
+                    isSelecting = false;
+                    return _fighters[fighterIndex].Clone;
                 }
             }
 
@@ -146,29 +175,27 @@
     public abstract class Fighter : IDamageble
     {
         private readonly int _maxHealth;
+        private int _health;
 
         protected Fighter(int health, int damage, string name)
         {
             _maxHealth = health;
-            Health = _maxHealth;
+            _health = _maxHealth;
             Damage = damage;
             Name = name;
-            TakedDamage += ShowDamageMassage;
         }
-
-        public event Action<int> TakedDamage;
-
-        public int Health { get; private set; }
 
         public string Name { get; private set; }
 
-        public bool IsDead => Health <= 0;
+        public bool IsDead => _health <= 0;
 
         public int Damage { get; }
 
+        public abstract Fighter Clone { get; }
+
         public virtual void ShowStatus()
         {
-            Console.WriteLine($"Здоровье: {Health}");
+            Console.WriteLine($"Здоровье: {_health}");
         }
 
         public abstract void Attack(IDamageble target);
@@ -176,14 +203,14 @@
         public virtual void TakeDamage(int damage)
         {
             ArgumentOutOfRangeException.ThrowIfNegative(damage);
-            Health -= damage;
-            TakedDamage?.Invoke(damage);
+            _health -= damage;
+            ShowDamageMassage(damage);
         }
 
         protected void Heal(int healValue)
         {
             ArgumentOutOfRangeException.ThrowIfNegative(healValue);
-            Health = Math.Min(Health + healValue, _maxHealth);
+            _health = Math.Min(_health + healValue, _maxHealth);
         }
 
         private void ShowDamageMassage(int damage)
@@ -194,23 +221,26 @@
 
     public class Knight : Fighter
     {
-        private readonly float _dobleDamageChance;
+        private readonly float _strongAttackMultiplyer = 2f;
+        private readonly float _strongAttackChance;
 
-        public Knight(float dobleDamageChance) : base(1000, 35, "Рыцарь")
+        public override Fighter Clone => new Knight(_strongAttackChance);
+
+        public Knight(float strongAttackChance) : base(1000, 35, "Рыцарь")
         {
-            ArgumentOutOfRangeException.ThrowIfNegative(dobleDamageChance);
-            _dobleDamageChance = dobleDamageChance;
+            ArgumentOutOfRangeException.ThrowIfNegative(strongAttackChance);
+            _strongAttackChance = strongAttackChance;
         }
 
         public override void Attack(IDamageble target)
         {
-            bool isDobleDamage = Utilits.GetBoolean(_dobleDamageChance);
+            bool isDobleDamage = Utilits.GetBoolean(_strongAttackChance);
             int damage = Damage;
             Console.Write($"{Name} атаковал противника ");
 
             if (isDobleDamage)
             {
-                damage *= 2;
+                damage = (int)(damage * _strongAttackMultiplyer);
                 Console.Write($"сильной атакой");
             }
 
@@ -222,11 +252,14 @@
     public class Spearman : Fighter
     {
         private int _attacksCout = default;
+        private int _attacksForDobleAttack = 3;
 
         public Spearman() : base(1000, 45, "Копейщик")
         {
 
         }
+
+        public override Fighter Clone => new Spearman();
 
         public override void Attack(IDamageble target)
         {
@@ -235,7 +268,7 @@
             Console.WriteLine($"{Name} атаковал противника");
             target.TakeDamage(damage);
 
-            if (_attacksCout == 3)
+            if (_attacksCout == _attacksForDobleAttack)
             {
                 target.TakeDamage(damage);
                 _attacksCout = default;
@@ -255,6 +288,8 @@
             _rageMultiplyer = rageMultiplyer;
             _healValue = healValue;
         }
+
+        public override Fighter Clone => new Viking(_rageMultiplyer, _healValue);
 
         public override void Attack(IDamageble target)
         {
@@ -278,7 +313,7 @@
     public class Magican : Fighter
     {
         private readonly int _magicAttackCoast;
-        private readonly float _magicAttackMultiplyer ;
+        private readonly float _magicAttackMultiplyer;
         private int _mana;
 
         public Magican(int mana, int magicAttackCoast, float magicAttackMultiplyer) : base(1000, 10, "Маг")
@@ -291,6 +326,8 @@
             _magicAttackCoast = magicAttackCoast;
             _magicAttackMultiplyer = magicAttackMultiplyer;
         }
+
+        public override Fighter Clone => new Magican(_mana, _magicAttackCoast, _magicAttackMultiplyer);
 
         public override void ShowStatus()
         {
@@ -324,6 +361,8 @@
             _dogeChance = dogeChance;
         }
 
+        public override Fighter Clone => new Thief(_dogeChance);
+
         public override void Attack(IDamageble target)
         {
             int damage = Damage;
@@ -348,10 +387,6 @@
 
     public interface IDamageble
     {
-        event Action<int> TakedDamage;
-
-        int Health { get; }
-
         void TakeDamage(int damage);
     }
 }
