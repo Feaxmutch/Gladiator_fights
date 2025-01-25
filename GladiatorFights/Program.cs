@@ -14,7 +14,7 @@
             };
 
             Colosseum colosseum = new(fighters);
-            colosseum.ShowMenu();
+            colosseum.DoWork();
         }
     }
 
@@ -61,7 +61,7 @@
             _fighters = fighters;
         }
 
-        public void ShowMenu()
+        public void DoWork()
         {
             const string CommandFight = "1";
             const string CommandExit = "2";
@@ -164,7 +164,7 @@
                 if (fighterIndex >= 0 && fighterIndex < _fighters.Count)
                 {
                     isSelecting = false;
-                    return _fighters[fighterIndex].Clone;
+                    return _fighters[fighterIndex].Clone();
                 }
             }
 
@@ -191,7 +191,7 @@
 
         public int Damage { get; }
 
-        public abstract Fighter Clone { get; }
+        public abstract Fighter Clone();
 
         public virtual void ShowStatus()
         {
@@ -207,7 +207,7 @@
             ShowDamageMassage(damage);
         }
 
-        protected void Heal(int healValue)
+        protected void TakeHeal(int healValue)
         {
             ArgumentOutOfRangeException.ThrowIfNegative(healValue);
             _health = Math.Min(_health + healValue, _maxHealth);
@@ -224,13 +224,13 @@
         private readonly float _strongAttackMultiplyer = 2f;
         private readonly float _strongAttackChance;
 
-        public override Fighter Clone => new Knight(_strongAttackChance);
-
         public Knight(float strongAttackChance) : base(1000, 35, "Рыцарь")
         {
             ArgumentOutOfRangeException.ThrowIfNegative(strongAttackChance);
             _strongAttackChance = strongAttackChance;
         }
+
+        public override Fighter Clone() => new Knight(_strongAttackChance);
 
         public override void Attack(IDamageble target)
         {
@@ -259,7 +259,7 @@
 
         }
 
-        public override Fighter Clone => new Spearman();
+        public override Fighter Clone() => new Spearman();
 
         public override void Attack(IDamageble target)
         {
@@ -289,7 +289,7 @@
             _healValue = healValue;
         }
 
-        public override Fighter Clone => new Viking(_rageMultiplyer, _healValue);
+        public override Fighter Clone() => new Viking(_rageMultiplyer, _healValue);
 
         public override void Attack(IDamageble target)
         {
@@ -305,7 +305,7 @@
 
             if (_rage >= _maxRage && IsDead == false)
             {
-                Heal(_healValue);
+                TakeHeal(_healValue);
             }
         }
     }
@@ -327,7 +327,7 @@
             _magicAttackMultiplyer = magicAttackMultiplyer;
         }
 
-        public override Fighter Clone => new Magican(_mana, _magicAttackCoast, _magicAttackMultiplyer);
+        public override Fighter Clone() => new Magican(_mana, _magicAttackCoast, _magicAttackMultiplyer);
 
         public override void ShowStatus()
         {
@@ -361,7 +361,7 @@
             _dogeChance = dogeChance;
         }
 
-        public override Fighter Clone => new Thief(_dogeChance);
+        public override Fighter Clone() => new Thief(_dogeChance);
 
         public override void Attack(IDamageble target)
         {
