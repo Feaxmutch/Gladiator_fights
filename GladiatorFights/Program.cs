@@ -14,7 +14,7 @@
             };
 
             Colosseum colosseum = new(fighters);
-            colosseum.DoWork();
+            colosseum.Work();
         }
     }
 
@@ -61,7 +61,7 @@
             _fighters = fighters;
         }
 
-        public void DoWork()
+        public void Work()
         {
             const string CommandFight = "1";
             const string CommandExit = "2";
@@ -91,43 +91,34 @@
 
         private void ExecuteFight(Fighter fighter1, Fighter fighter2)
         {
-            bool isFighting = true;
             Fighter winer = null;
 
             Console.Write($"Сейчас {fighter1.Name} и {fighter2.Name} сойдутся в бою");
             Console.ReadKey();
 
-            while (isFighting)
+            while (fighter1.IsDead == false && fighter2.IsDead == false)
             {
                 Console.Clear();
 
                 Console.WriteLine("Статус бойцов:");
-                Console.WriteLine($"\n{fighter1.Name}");
-                fighter1.ShowStatus();
-                Console.WriteLine($"\n{fighter2.Name}");
-                fighter2.ShowStatus();
-
+                ShowFighterStatus(fighter1);
+                ShowFighterStatus(fighter2);
                 Console.WriteLine();
+
                 fighter1.Attack(fighter2);
-
-                if (fighter2.IsDead)
-                {
-                    isFighting = false;
-                    winer = fighter1;
-                    continue;
-                }
-
                 Console.ReadKey();
+
                 fighter2.Attack(fighter1);
-
-                if (fighter1.IsDead)
-                {
-                    isFighting = false;
-                    winer = fighter2;
-                    continue;
-                }
-
                 Console.ReadKey();
+            }
+
+            if (fighter1.IsDead)
+            {
+                winer = fighter2;
+            }
+            else
+            {
+                winer = fighter1;
             }
 
             ShowWinMessage(winer);
@@ -144,6 +135,25 @@
             Console.WriteLine($"{winer.Name} победил");
         }
 
+        private void ShowFighterStatus(Fighter fighter)
+        {
+            Console.WriteLine($"\n{fighter.Name}");
+            fighter.ShowStatus();
+        }
+
+        private void ShowAllFighters()
+        {
+            for (int i = 0; i < _fighters.Count; i++)
+            {
+                Console.WriteLine($"{i}) {_fighters[i].Name}");
+            }
+        }
+
+        private bool IsFighterIndexInRange(int index)
+        {
+            return index >= 0 && index < _fighters.Count;
+        }
+
         private Fighter SelectFighter()
         {
             bool isSelecting = true;
@@ -153,22 +163,23 @@
             {
                 Console.Clear();
                 Console.WriteLine($"Выберите бойца:");
-
-                for (int i = 0; i < _fighters.Count; i++)
-                {
-                    Console.WriteLine($"{i}) {_fighters[i].Name}");
-                }
+                ShowAllFighters();
 
                 while (Utilits.TryRequestNumber("Введите номер", out fighterIndex) == false) { }
 
-                if (fighterIndex >= 0 && fighterIndex < _fighters.Count)
+                if (IsFighterIndexInRange(fighterIndex))
                 {
                     isSelecting = false;
                     return _fighters[fighterIndex].Clone();
                 }
+                else
+                {
+                    Console.WriteLine($"Бойца под номером \"{fighterIndex}\" не существует");
+                    Console.ReadKey();
+                }
             }
 
-            return null;
+            return default;
         }
     }
 
