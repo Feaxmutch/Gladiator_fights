@@ -183,30 +183,54 @@
         }
     }
 
+    public class Health
+    {
+        private int _maxValue;
+        private int _minValue = 0;
+
+        public Health(int maxValue)
+        {
+            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maxValue);
+            _maxValue = maxValue;
+        }
+
+        public int Value { get; private set; }
+
+        public void Add(int addValue)
+        {
+            ArgumentOutOfRangeException.ThrowIfNegative(addValue);
+            Value = Math.Clamp(Value + addValue, _minValue, _maxValue);
+        }
+
+        public void Substract(int substractValue)
+        {
+            ArgumentOutOfRangeException.ThrowIfNegative(substractValue);
+            Value = Math.Clamp(Value - substractValue, _minValue, _maxValue);
+        }
+    }
+
     public abstract class Fighter : IDamageble
     {
-        private readonly int _maxHealth;
-        private int _health;
-
         protected Fighter(int health, int damage, string name)
         {
-            _maxHealth = health;
-            _health = _maxHealth;
+            Health = new(health);
             Damage = damage;
             Name = name;
         }
 
         public string Name { get; private set; }
 
-        public bool IsDead => _health <= 0;
+        public bool IsDead => Health.Value <= 0;
 
         public int Damage { get; }
+
+        protected Health Health { get; }
 
         public abstract Fighter Clone();
 
         public virtual void ShowStatus()
         {
-            Console.WriteLine($"Здоровье: {_health}");
+            Console.WriteLine($"Здоровье: {Health.Value}");
         }
 
         public abstract void Attack(IDamageble target);
@@ -214,14 +238,8 @@
         public virtual void TakeDamage(int damage)
         {
             ArgumentOutOfRangeException.ThrowIfNegative(damage);
-            _health -= damage;
+            Health.Substract(damage);
             ShowDamageMassage(damage);
-        }
-
-        protected void TakeHeal(int healValue)
-        {
-            ArgumentOutOfRangeException.ThrowIfNegative(healValue);
-            _health = Math.Min(_health + healValue, _maxHealth);
         }
 
         private void ShowDamageMassage(int damage)
@@ -318,6 +336,12 @@
             {
                 TakeHeal(_healValue);
             }
+        }
+
+        private void TakeHeal(int healValue)
+        {
+            ArgumentOutOfRangeException.ThrowIfNegative(healValue);
+            Health.Add(healValue);
         }
     }
 
